@@ -19,17 +19,19 @@
   <h1>Gestor d’Imatges</h1>
 
   <input type="file" id="fileInput" accept="image/*" />
-  <button onclick="uploadImage()">Pujar</button>
+  <button id="uploadBtn">Pujar</button>
   <p id="message"></p>
 
   <h2>Llista d’imatges</h2>
   <div class="image-container" id="imageList"></div>
 
   <script type="module">
-    import { BlobServiceClient } from "https://cdn.jsdelivr.net/npm/@azure/storage-blob/+esm";
+    import {
+      BlobServiceClient
+    } from "https://cdn.jsdelivr.net/npm/@azure/storage-blob/+esm";
 
-    const sasUrl = "https://iesbiblob.blob.core.windows.net/contenidor01?sp=r&st=2025-07-03T13:00:11Z&se=2025-07-03T21:00:11Z&sv=2024-11-04&sr=c&sig=OdpSjI8EpT%2FKj%2Fq7WKb4cfPgC08lwUm%2BMaOM%2B21SJyM%3D";
-    const containerName = "iesbiblob";
+    const sasUrl = "https://iesbiblob.blob.core.windows.net/contenidor01?sp=racwdli&st=2025-07-03T13:50:07Z&se=2025-07-03T21:50:07Z&sv=2024-11-04&sr=c&sig=A6g4MPheMk3%2FQHCTfbYE0Wbxbpa%2B1mQLcNpHl5O%2BHtw%3D";
+    const containerName = "contenidor01";
 
     const blobServiceClient = new BlobServiceClient(sasUrl);
     const containerClient = blobServiceClient.getContainerClient(containerName);
@@ -39,8 +41,10 @@
       if (!file) return alert("Selecciona una imatge.");
       if (file.size > 5 * 1024 * 1024) return alert("Mida màxima: 5MB");
 
-      const blockBlobClient = containerClient.getBlockBlobClient(file.name);
+      const uniqueName = `${Date.now()}-${file.name}`;
+      const blockBlobClient = containerClient.getBlockBlobClient(uniqueName);
       await blockBlobClient.uploadBrowserData(file);
+
       document.getElementById("message").textContent = "Imatge pujada correctament!";
       loadImages();
     }
@@ -50,7 +54,7 @@
       container.innerHTML = "";
 
       for await (const blob of containerClient.listBlobsFlat()) {
-        const blobUrl = `${sasUrl.split('?')[0]}/${blob.name}?${sasUrl.split('?')[1]}`;
+        const blobUrl = `${containerClient.url}/${blob.name}${sasUrl.includes('?') ? '?' + sasUrl.split('?')[1] : ''}`;
 
         const box = document.createElement("div");
         box.className = "image-box";
@@ -79,8 +83,10 @@
       loadImages();
     }
 
-    loadImages();
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("uploadBtn").addEventListener("click", uploadImage);
+      loadImages();
+    });
   </script>
 </body>
 </html>
-

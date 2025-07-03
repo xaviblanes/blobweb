@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestor d’Imatges amb Azure Blob</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    img { max-width: 150px; margin: 10px; border: 1px solid #ccc; }
+    .image-container { display: flex; flex-wrap: wrap; gap: 10px; }
+    .image-box { position: relative; display: inline-block; }
+    .delete-btn {
+      position: absolute; top: 5px; right: 5px;
+      background: red; color: white; border: none;
+      cursor: pointer; padding: 2px 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gestor d’Imatges</h1>
+
+  <input type="file" id="fileInput" accept="image/*" />
+  <button onclick="uploadImage()">Pujar</button>
+  <p id="message"></p>
+
+  <h2>Llista d’imatges</h2>
+  <div class="image-container" id="imageList"></div>
+
+  <script type="module">
+    import { BlobServiceClient } from "https://cdn.jsdelivr.net/npm/@azure/storage-blob/+esm";
+
+    const sasUrl = "https://iesbiblob.blob.core.windows.net/contenidor01?sv=2024-11-04&ss=bfqt&srt=c&sp=rwdlacupiytfx&se=2025-07-03T20:37:43Z&st=2025-07-03T12:37:43Z&spr=https,http&sig=HxiSsBIIW%2FNYXxFGBqz7w%2BMPSncgWynjNW%2FuZnDoHYI%3D";
+    const containerName = "iesbiblob";
+
+    const blobServiceClient = new BlobServiceClient(sasUrl);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
+    async function uploadImage() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return alert("Selecciona una imatge.");
+      if (file.size > 5 * 1024 * 1024) return alert("Mida màxima: 5MB");
+
+      const blockBlobClient = containerClient.getBlockBlobClient(file.name);
+      await blockBlobClient.uploadBrowserData(file);
+      document.getElementById("message").textContent = "Imatge pujada correctament!";
+      loadImages();
+    }
+
+    async function loadImages() {
+      const container = document.getElementById("imageList");
+      container.innerHTML = "";
+
+      for await (const blob of containerClient.listBlobsFlat()) {
+        const blobUrl = `${sasUrl.split('?')[0]}/${blob.name}?${sasUrl.split('?')[1]}`;
+
+        const box = document.createElement("div");
+        box.className = "image-box";
+
+        const img = document.createElement("img");
+        img.src = blobUrl;
+        img.alt = blob.name;
+        img.title = blob.name;
+
+        const btn = document.createElement("button");
+        btn.textContent = "✕";
+        btn.className = "delete-btn";
+        btn.onclick = () => deleteImage(blob.name);
+
+        box.appendChild(img);
+        box.appendChild(btn);
+        container.appendChild(box);
+      }
+    }
+
+    async function deleteImage(name) {
+      if (!confirm(`Vols esborrar "${name}"?`)) return;
+      const blobClient = containerClient.getBlobClient(name);
+      await blobClient.delete();
+      document.getElementById("message").textContent = `"${name}" esborrada correctament.`;
+      loadImages();
+    }
+
+    loadImages();
+  </script>
+</body>
+</html>
+

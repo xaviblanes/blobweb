@@ -28,7 +28,7 @@
   <script type="module">
     import { BlobServiceClient } from "https://cdn.jsdelivr.net/npm/@azure/storage-blob/+esm";
 
-    const sasUrl = "https://iesbiblob.blob.core.windows.net/contenidor01?sv=2024-11-04&ss=bfqt&srt=c&sp=rwdlacupiytfx&se=2025-07-03T20:37:43Z&st=2025-07-03T12:37:43Z&spr=https,http&sig=HxiSsBIIW%2FNYXxFGBqz7w%2BMPSncgWynjNW%2FuZnDoHYI%3D";
+    const sasUrl = "https://iesbiblob.blob.core.windows.net/contenidor01?sp=r&st=2025-07-03T13:00:11Z&se=2025-07-03T21:00:11Z&sv=2024-11-04&sr=c&sig=OdpSjI8EpT%2FKj%2Fq7WKb4cfPgC08lwUm%2BMaOM%2B21SJyM%3D";
     const containerName = "iesbiblob";
 
     const blobServiceClient = new BlobServiceClient(sasUrl);
